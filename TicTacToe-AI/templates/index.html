@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .symbol-selection {
+            text-align: center;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .symbol-selection.active {
+            display: block;
+        }
+
+        .btn {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: #f0f2f5;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: #1e3c72;
+        }
+
+        .cell:hover {
+            background: #e4e6e9;
+            transform: scale(1.05);
+        }
+
+        .cell.x {
+            color: #e74c3c;
+        }
+
+        .cell.o {
+            color: #3498db;
+        }
+
+        .game-info {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.2em;
+            color: #1e3c72;
+        }
+
+        .game-controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status.win {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.lose {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.draw {
+            background: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .cell {
+                font-size: 2em;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Animation for moves */
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .cell.x::before,
+        .cell.o::before {
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        /* Loading indicator */
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .loading::after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3c72;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic-Tac-Toe AI</h1>
+        
+        <div class="symbol-selection active">
+            <h2>Choose your symbol</h2>
+            <button class="btn" onclick="selectSymbol('X')">Play as X</button>
+            <button class="btn" onclick="selectSymbol('O')">Play as O</button>
+        </div>
+
+        <div class="board" id="board">
+            <button class="cell" data-index="0"></button>
+            <button class="cell" data-index="1"></button>
+            <button class="cell" data-index="2"></button>
+            <button class="cell" data-index="3"></button>
+            <button class="cell" data-index="4"></button>
+            <button class="cell" data-index="5"></button>
+            <button class="cell" data-index="6"></button>
+            <button class="cell" data-index="7"></button>
+            <button class="cell" data-index="8"></button>
+        </div>
+
+        <div class="loading"></div>
+        <div class="status" id="status"></div>
+
+        <div class="game-info">
+            <p id="turn-info">Choose your symbol to start</p>
+        </div>
+
+        <div class="game-controls">
+            <button class="btn" onclick="resetGame()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables to manage game state on the frontend.
+        let playerSymbol = '';   // Stores the symbol chosen by the human player ('X' or 'O').
+        let aiSymbol = '';       // Stores the symbol assigned to the AI player.
+        let currentPlayer = '';  // Tracks whose turn it is ('X' or 'O').
+        let gameActive = false;   // Boolean flag to indicate if the game is currently active.
+        // Represents the current state of the Tic-Tac-Toe board, initialized as empty.
+        let board = ['', '', '', '', '', '', '', '', ''];
+
+        async function selectSymbol(symbol) {
+            playerSymbol = symbol;
+            aiSymbol = symbol === 'X' ? 'O' : 'X';
+            
+            // Send the chosen symbol to the backend to initialize the game state.
+            const response = await fetch('/set-symbol', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ symbol: playerSymbol })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                gameActive = true; // Set game to active.
+                currentPlayer = 'X'; // Tic-Tac-Toe traditionally starts with 'X'.
+                // Hide the symbol selection interface.
+                document.querySelector('.symbol-selection').classList.remove('active');
+                updateTurnInfo(); // Update the turn display.
+                
+                // If AI is 'X', it makes the first move.
+                if (aiSymbol === 'X') {
+                    document.querySelector('.loading').classList.add('active'); // Show loading indicator.
+                    // Request the AI's first move from the backend.
+                    const aiResponse = await fetch('/make-move', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({}) // Empty body signals AI-initiated move.
+                    });
+                    const aiData = await aiResponse.json();
+                    document.querySelector('.loading').classList.remove('active'); // Hide loading indicator.
+
+                    if (aiData.error) {
+                        console.error('Error during AI first move:', aiData.error);
+                        return;
+                    }
+                    board = aiData.board; // Update the local board state with AI's move.
+                    updateBoardUI();      // Refresh the UI to show AI's move.
+                    // Check if the game ended after AI's first move (unlikely but possible in complex games).
+                    if (aiData.gameOver) {
+                        gameActive = false;
+                        if (aiData.winner === playerSymbol) {
+                            showStatus('win');
+                        } else if (aiData.winner === aiSymbol) {
+                            showStatus('lose');
+                        } else {
+                            showStatus('draw');
+                        }
+                    } else {
+                        currentPlayer = aiData.currentPlayer; // Update current player from backend.
+                        updateTurnInfo(); // Update turn display.
+                    }
+                }
+            } else {
+                console.error('Failed to set symbol:', data.error);
+            }
+        }
+
+        function updateTurnInfo() {
+            const turnInfo = document.getElementById('turn-info');
+            // If the game is not active, prompt the user to choose a symbol.
+            if (!gameActive) {
+                turnInfo.textContent = 'Choose your symbol to start';
+                return;
+            }
+            // Otherwise, display whose turn it currently is.
+            turnInfo.textContent = `Current turn: ${currentPlayer}`;
+        }
+
+        function updateBoardUI() {
+            // Iterate over each cell button on the board.
+            document.querySelectorAll('.cell').forEach((cell, index) => {
+                cell.textContent = board[index]; // Set the cell's text content (X, O, or empty).
+                cell.className = 'cell'; // Reset all classes to default 'cell'.
+                // If the cell is not empty, add a class for styling (e.g., 'x' or 'o').
+                if (board[index] !== '') {
+                    cell.classList.add(board[index].toLowerCase());
+                }
+            });
+        }
+
+        async function handleCellClick(index) {
+            // Prevent moves if the game is not active, the cell is already occupied, or it's not the player's turn.
+            if (!gameActive || board[index] !== '' || currentPlayer !== playerSymbol) {
+                return;
+            }
+
+            document.querySelector('.loading').classList.add('active'); // Show loading indicator.
+
+            // Send the player's move to the backend.
+            const response = await fetch('/make-move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ position: index }) // Send the clicked cell's index.
+            });
+            const data = await response.json();
+
+            document.querySelector('.loading').classList.remove('active'); // Hide loading indicator.
+
+            if (data.error) {
+                console.error('Error making move:', data.error);
+                return;
+            }
+
+            // Update the local board state based on the backend's response (includes player's and AI's move).
+            board = data.board;
+            updateBoardUI(); // Refresh the UI to show both moves.
+
+            // Check if the game is over after the moves.
+            if (data.gameOver) {
+                gameActive = false; // Deactivate the game.
+                // Display the appropriate status message (win, lose, or draw).
+                if (data.winner === playerSymbol) {
+                    showStatus('win');
+                } else if (data.winner === aiSymbol) {
+                    showStatus('lose');
+                } else {
+                    showStatus('draw');
+                }
+            } else {
+                currentPlayer = data.currentPlayer; // Update current player from backend for the next turn.
+                updateTurnInfo(); // Update turn display.
+            }
+        }
+
+        function showStatus(result) {
+            const status = document.getElementById('status');
+            status.className = 'status ' + result; // Apply CSS class based on game result.
+            // Set the appropriate text content for the status message.
+            if (result === 'win') {
+                status.textContent = 'Congratulations! You won!';
+            } else if (result === 'lose') {
+                status.textContent = 'Game Over! AI wins!';
+            } else {
+                status.textContent = "It's a draw!";
+            }
+        }
+
+        function resetGame() {
+            // Reset all game-related variables to their initial states.
+            board = ['', '', '', '', '', '', '', '', ''];
+            gameActive = false;
+            playerSymbol = '';
+            aiSymbol = '';
+            currentPlayer = '';
+            updateBoardUI(); // Clear the board visually.
+            // Show the symbol selection interface again.
+            document.querySelector('.symbol-selection').classList.add('active');
+            document.getElementById('status').className = 'status'; // Clear status message.
+            updateTurnInfo(); // Reset turn info display.
+        }
+
+        // Add click event listeners to all cell buttons on the board.
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const index = parseInt(cell.dataset.index); // Get the index of the clicked cell.
+                handleCellClick(index); // Call the handler for the cell click.
+            });
+        });
+    </script>
+</body>
+</html>
